@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:adversarial": "node --loader ts-node/esm tests/adversarial/run.ts"
+    "test:adversarial": "tsx tests/adversarial/run.ts"
   },
   "keywords": [
     "cranium",
@@ -18,10 +18,12 @@
   "author": "Wyl Mathes",
   "license": "UNLICENSED",
   "devDependencies": {
+    "@types/jest": "^29.0.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.4.0",
-    "ts-node": "^10.9.0",
     "jest": "^29.0.0",
-    "@types/jest": "^29.0.0"
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.4.0"
   }
 }

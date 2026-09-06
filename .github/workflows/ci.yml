@@ -1,0 +1,57 @@
+name: Cranium Ultra CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ultra-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  project-checks:
+    name: ${{ matrix.project }} checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: cranium-os
+            path: projects/cranium-os
+            build: npm run build
+            test: npm test
+          - project: cranium-core-hardened
+            path: projects/cranium-core-hardened
+            build: npm run build
+            test: npm test -- --runInBand
+            adversarial: npm run test:adversarial
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.path }}/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck --if-present
+      - name: Test
+        run: ${{ matrix.test }}
+      - name: Adversarial verification
+        if: matrix.adversarial != ''
+        run: ${{ matrix.adversarial }}
+      - name: Build
+        run: ${{ matrix.build }}
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high

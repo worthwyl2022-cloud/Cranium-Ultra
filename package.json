@@ -1,0 +1,15 @@
+{
+  "name": "cranium-ultra",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Acquisition-grade Cranium OS and hardened Core monorepo",
+  "scripts": {
+    "verify:os": "npm --prefix projects/cranium-os ci && npm --prefix projects/cranium-os run typecheck && npm --prefix projects/cranium-os test && npm --prefix projects/cranium-os run build && npm --prefix projects/cranium-os audit --omit=dev --audit-level=high",
+    "verify:core": "npm --prefix projects/cranium-core-hardened ci && npm --prefix projects/cranium-core-hardened test -- --runInBand && npm --prefix projects/cranium-core-hardened run test:adversarial && npm --prefix projects/cranium-core-hardened run build && npm --prefix projects/cranium-core-hardened audit --omit=dev --audit-level=high",
+    "verify": "npm run verify:os && npm run verify:core"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED"
+}

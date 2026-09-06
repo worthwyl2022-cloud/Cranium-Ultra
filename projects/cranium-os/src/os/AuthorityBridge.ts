@@ -71,16 +71,17 @@ export interface KernelSnapshot {
 }
 
 /**
- * Minimal in-process bridge used by the OS UI.
- * In production this would call the hardened Cranium Core service.
- * For the acquisition demo it maintains a faithful local simulation
- * of the sole issuance boundary rules.
+ * Browser adapter for the authority boundary.
+ * This adapter is intentionally explicit about its deployment boundary: it
+ * applies the same request contract locally for offline UI operation, but its
+ * receipts are marked unsigned and must not be treated as production authority.
  */
 export class AuthorityBridge {
   private authorityVersion = 1;
   private threatLevel: KernelSnapshot["threatLevel"] = "NOMINAL";
   private anomalies = 0;
   private transitions: AuthorityTransition[] = [];
+  private readonly idempotencyHashes = new Map<string, string>();
 
   getSnapshot(): KernelSnapshot {
     return {
@@ -96,9 +97,16 @@ export class AuthorityBridge {
   }
 
   async submit(request: AuthorityTransitionRequest): Promise<AuthorityTransition> {
-    // Simulate boundary evaluation (mirrors hardened Core rules)
+    const requestHash = await this.hashRequest(request);
     const violations: string[] = [];
     let explanation = "All boundary checks passed.";
+
+    const priorHash = this.idempotencyHashes.get(request.idempotencyKey);
+    if (priorHash && priorHash !== requestHash) {
+      violations.push("REPLAY_CONFLICT");
+      explanation = "Idempotency key was previously used with a different request hash.";
+    }
+    this.idempotencyHashes.set(request.idempotencyKey, requestHash);
 
     if (request.targetAuthorityVersion !== this.authorityVersion) {
       violations.push("STALE_AUTHORITY_VERSION");
@@ -146,11 +154,11 @@ export class AuthorityBridge {
       boundary: { passed, violations, explanation },
       evidenceRefs: request.evidence.map(e => e.id),
       requestHash: {
-        hexDigest: await this.fakeHash(request),
+        hexDigest: requestHash,
         algorithm: "SHA-256",
       },
       timestamp: request.timestamp,
-      receiptSignature: `sig_${Date.now()}`,
+      receiptSignature: `UNSIGNED_LOCAL_RECEIPT:${requestHash.slice(0, 16)}`,
     };
 
     this.transitions.unshift(transition);
@@ -159,12 +167,10 @@ export class AuthorityBridge {
     return transition;
   }
 
-  private async fakeHash(req: AuthorityTransitionRequest): Promise<string> {
-    const str = JSON.stringify(req);
-    // Simple deterministic stand-in for demo (real Core uses proper SHA-256)
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-    return Math.abs(h).toString(16).padStart(16, "0") + "a591a6d40bf42040";
+  private async hashRequest(req: AuthorityTransitionRequest): Promise<string> {
+    const bytes = new TextEncoder().encode(JSON.stringify(req));
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
   }
 }
 
