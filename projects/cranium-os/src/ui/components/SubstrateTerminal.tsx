@@ -38,7 +38,7 @@ export default function SubstrateTerminal() {
       targetAuthorityVersion: snapshot.authorityVersion ?? 0,
     };
 
-    // Simulated deliberation trace for the UI
+    // Illustrative deliberation trace for the UI
     const steps = [
       { step: "INTENTION_RECEIVED", status: "ACTIVE", detail: "Operator intention accepted by OS layer" },
       { step: "CANONICAL_HASH", status: "PROCESSING", detail: "Request submitted to Cranium Core for canonical hashing" },

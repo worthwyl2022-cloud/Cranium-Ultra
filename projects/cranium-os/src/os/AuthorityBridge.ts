@@ -82,7 +82,7 @@ export class AuthorityBridge {
 
   /**
    * Fail closed until an authenticated Kernel adapter is configured. This is
-   * intentionally not a simulated transition and cannot produce a receipt.
+   * intentionally not an authority transition and cannot produce a receipt.
    */
   async submit(request: AuthorityTransitionRequest): Promise<AuthoritySubmissionResult> {
     return {
