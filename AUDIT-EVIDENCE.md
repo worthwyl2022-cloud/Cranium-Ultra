@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- Repository: `worthwyl2022-cloud/Cranium-Ultra`
+- Repository: `worthwyl2022-cloud/cranium-ultra-platform`
 - Default working branch observed: `main`
 - Commit count at inventory: `8`
 - Files at inventory: `58`
