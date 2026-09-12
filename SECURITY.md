@@ -4,7 +4,7 @@
 
 Cranium OS is an operator surface. It must not independently grant authority. Privileged requests must be validated by the hardened Cranium Core authority boundary before they are treated as effective.
 
-The browser `AuthorityBridge` is an offline UI adapter. Its receipts are labeled `UNSIGNED_LOCAL_RECEIPT` and are not production signatures. A deployable service must replace this adapter with an authenticated transport to a Core service and verify server-issued receipts before displaying a grant as authoritative.
+The browser `AuthorityBridge` never evaluates requests or creates receipts. It fails closed until an authenticated transport to `cranium-kernel` is configured. Only a receipt issued and verified by the Kernel authority store may be displayed as authoritative.
 
 ## Reporting a vulnerability
 

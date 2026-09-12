@@ -21,38 +21,19 @@ function request(overrides: Partial<AuthorityTransitionRequest> = {}): Authority
 }
 
 describe("AuthorityBridge", () => {
-  it("denies elevated authority without verified evidence", async () => {
+  it("fails closed when the authenticated Kernel endpoint is not configured", async () => {
     const bridge = new AuthorityBridge();
     const result = await bridge.submit(request({
       requestedAuthority: { authorityClass: AuthorityClass.ENTERPRISE, weight: 0.9 },
     }));
-    expect(result.decision.kind).toBe("Denied");
-    expect(result.boundary.violations).toContain("INSUFFICIENT_EVIDENCE");
-    expect(result.requestHash.hexDigest).toMatch(/^[a-f0-9]{64}$/);
-    expect(result.receiptSignature).toMatch(/^UNSIGNED_LOCAL_RECEIPT:/);
+    expect(result.status).toBe("UNAVAILABLE");
+    expect(result.authority).toBe("cranium-kernel");
+    expect(result.reason).toBe("KERNEL_ENDPOINT_REQUIRED");
   });
 
-  it("rejects an idempotency-key replay with a different request hash", async () => {
+  it("does not maintain a browser-local canonical ledger", () => {
     const bridge = new AuthorityBridge();
-    await bridge.submit(request());
-    const replay = await bridge.submit(request({ justification: "Changed payload" }));
-    expect(replay.decision.kind).toBe("Denied");
-    expect(replay.boundary.violations).toContain("REPLAY_CONFLICT");
-  });
-
-  it("rejects system authority outside root quorum", async () => {
-    const bridge = new AuthorityBridge();
-    const result = await bridge.submit(request({
-      requestedAuthority: { authorityClass: AuthorityClass.SYSTEM, weight: 1 },
-      evidence: [{
-        id: "ev-test",
-        uri: "https://invalid.example/evidence",
-        sha256: "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-        verified: true,
-        description: "Adversarial test evidence",
-      }],
-    }));
-    expect(result.decision.kind).toBe("Denied");
-    expect(result.boundary.violations).toContain("CONSTITUTION_VIOLATION");
+    expect(bridge.getLedger()).toEqual([]);
+    expect(bridge.getSnapshot().authorityVersion).toBeNull();
   });
 });

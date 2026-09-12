@@ -4,8 +4,8 @@ import { bridge } from "../../os/AuthorityBridge";
 export default function AuthorityDashboard() {
   const snapshot = bridge.getSnapshot();
   const ledger = bridge.getLedger();
-  const granted = ledger.filter(t => t.decision.kind === "Granted").length;
-  const denied = ledger.filter(t => t.decision.kind === "Denied").length;
+  const granted = 0;
+  const denied = 0;
 
   return (
     <div className="h-full max-w-5xl mx-auto p-6 md:p-10 flex flex-col gap-8">
@@ -39,7 +39,7 @@ export default function AuthorityDashboard() {
         <MetricCard
           icon={<Lock size={18} />}
           label="Authority Version"
-          value={`v${snapshot.authorityVersion}`}
+          value={snapshot.authorityVersion === null ? "—" : `v${snapshot.authorityVersion}`}
           color="text-cyan-400"
         />
         <MetricCard

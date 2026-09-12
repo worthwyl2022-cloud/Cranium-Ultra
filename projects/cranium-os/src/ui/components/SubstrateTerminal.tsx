@@ -5,24 +5,24 @@ import {
   bridge,
   AuthorityClass,
   AuthorityTransitionRequest,
-  AuthorityTransition,
+  AuthoritySubmissionResult,
 } from "../../os/AuthorityBridge";
 
 export default function SubstrateTerminal() {
   const [intention, setIntention] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastTransition, setLastTransition] = useState<AuthorityTransition | null>(null);
+  const [lastSubmission, setLastSubmission] = useState<AuthoritySubmissionResult | null>(null);
   const [trace, setTrace] = useState<{ step: string; status: string; detail: string }[]>([]);
 
   const handleSubmit = async () => {
     if (!intention.trim() || isSubmitting) return;
     setIsSubmitting(true);
     setTrace([]);
-    setLastTransition(null);
+    setLastSubmission(null);
 
     const snapshot = bridge.getSnapshot();
 
-    // Build a real AuthorityTransitionRequest
+    // Build a Kernel-shaped request. The browser does not evaluate it.
     const request: AuthorityTransitionRequest = {
       requestId: `req_${Date.now()}`,
       idempotencyKey: `idem_${Date.now()}`,
@@ -35,7 +35,7 @@ export default function SubstrateTerminal() {
       justification: intention,
       requesterId: "OS_OPERATOR",
       timestamp: Date.now(),
-      targetAuthorityVersion: snapshot.authorityVersion,
+      targetAuthorityVersion: snapshot.authorityVersion ?? 0,
     };
 
     // Simulated deliberation trace for the UI
@@ -51,19 +51,19 @@ export default function SubstrateTerminal() {
       setTrace((prev) => [...prev, steps[i]]);
     }
 
-    const transition = await bridge.submit(request);
+    const submission = await bridge.submit(request);
 
-    const finalStatus = transition.decision.kind === "Granted" ? "SUCCESS" : "LOCKED";
+    const finalStatus = "LOCKED";
     setTrace((prev) => [
       ...prev,
       {
         step: "ISSUANCE_DECISION",
         status: finalStatus,
-        detail: transition.boundary.explanation,
+        detail: "No authenticated cranium-kernel endpoint is configured; no evaluation or receipt was produced.",
       },
     ]);
 
-    setLastTransition(transition);
+    setLastSubmission(submission);
     setIsSubmitting(false);
   };
 
@@ -104,18 +104,20 @@ export default function SubstrateTerminal() {
             <Send size={15} />
           </button>
 
-          {lastTransition && (
+          {lastSubmission && (
             <div className="mt-6 pt-5 border-t border-white/5">
               <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-2">
                 Last Decision
               </div>
               <div className={`text-sm font-mono font-bold ${
-                lastTransition.decision.kind === "Granted" ? "text-emerald-400" : "text-amber-400"
+                "text-amber-400"
               }`}>
-                {lastTransition.decision.kind}
+                NOT EVALUATED
               </div>
               <div className="text-xs text-zinc-500 mt-1 font-mono">
-                {lastTransition.boundary.explanation}
+                {lastSubmission.reason === "KERNEL_ENDPOINT_REQUIRED"
+                  ? "Configure an authenticated cranium-kernel adapter to obtain a real evaluation."
+                  : "Submission unavailable."}
               </div>
             </div>
           )}
