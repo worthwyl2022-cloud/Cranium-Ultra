@@ -9,7 +9,7 @@
     "verify": "npm run verify:os && npm run verify:core"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24.0.0"
   },
   "license": "UNLICENSED"
 }
